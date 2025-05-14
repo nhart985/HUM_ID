@@ -1,8 +1,6 @@
-Functions.cpp: Rcpp implementation of method for simulations
+Functions.cpp: Rcpp implementation of method
 
-PBC_Functions.cpp: Rcpp implementation of method for PBC dataset analysis
+Simulations.R: Example R code for simulations
 
-Simulations.R: R code for simulations
-
-PBC_HUM: R code for PBC dataset analysis
+HUM_Colon_Cancer.R: R code for Colon Cancer dataset analysis
 
