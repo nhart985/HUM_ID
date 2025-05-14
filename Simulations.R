@@ -7,21 +7,28 @@ get_data=function(n,tmax) {
   Z1=rnorm(n)
   Z2=rnorm(n)
   Z=data.frame(Z1,Z2)
-  betas=c(0,0)
+  betas=c(0.5,0.5)
   names(betas)=c("Z1","Z2")
-  tde=c(0.1,0.1)
+  tde=c(0,-0.5)
   names(tde)=c("Z1","Z2")
-  ill=simsurv(dist="exponential",lambdas=0.2,x=Z,betas=betas,tde=tde,maxt=tmax)
+  ill=simsurv(dist="exponential",lambdas=0.025,x=Z,betas=betas,tde=tde,tdefunction=function(x){as.numeric(x > tmax/2)},maxt=tmax)
   names(ill)=c("id","ill_time","ill")
-  betas=c(0,0)
+  betas=c(-0.5,-0.5)
   names(betas)=c("Z1","Z2")
-  tde=c(-0.1,-0.1)
+  tde=c(0,0.5)
   names(tde)=c("Z1","Z2")
-  death=simsurv(dist="exponential",lambdas=0.2,x=Z,betas=betas,tde=tde,maxt=tmax)
+  death=simsurv(dist="exponential",lambdas=0.025,x=Z,betas=betas,tde=tde,tdefunction=function(x){as.numeric(x > tmax/2)},maxt=tmax)
   names(death)=c("id","death_time","death")
-  result=merge(ill,death,by="id")
+  betas=c(-0.5,-0.5)
+  names(betas)=c("Z1","Z2")
+  tde=c(0,0.5)
+  names(tde)=c("Z1","Z2")
+  post_death=simsurv(dist="exponential",lambdas=0.025,x=Z,betas=betas,tde=tde,tdefunction=function(x){as.numeric(x > tmax/2)},maxt=tmax)
+  names(post_death)=c("id","post_death_time","post_death")
+  result=merge(merge(ill,death,by="id"),post_death,by="id")
   result$ill=as.numeric(result$ill_time < result$death_time)
   result$ill_time=pmin(result$ill_time,result$death_time)
+  result$death_time[result$ill==1]=result$ill_time[result$ill==1]+result$post_death_time[result$ill==1]
   result$death1=as.numeric(result$ill==0 & result$death==1)
   result=cbind(result,Z)
   return(result)
@@ -88,10 +95,10 @@ ivus=function(times,VUS_result,cox12_marginal,cox13_marginal,cox23_marginal,ttfu
   return(sum(VUS_result[[1]]*P1*P2*P3_temp,na.rm=T)/sum(P1*P2*P3_temp,na.rm=T))
 }
 
-Nsim=10
+Nsim=1000
 n=100
-tmax=50
-eval_times=1:10
+tmax=30
+eval_times=1:tmax
 c_indices_A=matrix(NA,Nsim,3)
 c_indices_B=matrix(NA,Nsim,3)
 HUM_ID_A=matrix(NA,Nsim,length(eval_times))
@@ -107,7 +114,7 @@ for(i in 1:Nsim) {
   dat=get_data(n,tmax)
   dat_trans23=dat[dat$ill==1,]
   
-  ttfun=function(t) {return(t^2)}
+  ttfun=function(t) {return(t > tmax/2)}
   
   dat_tt_ill=survSplit(Surv(ill_time,ill)~.,dat,cut=dat$ill_time)
   dat_tt_ill$Z2_tt=dat_tt_ill$Z2*ttfun(dat_tt_ill$ill_time)
