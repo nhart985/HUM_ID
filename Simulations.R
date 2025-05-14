@@ -118,22 +118,24 @@ for(i in 1:Nsim) {
   
   dat_tt_ill=survSplit(Surv(ill_time,ill)~.,dat,cut=dat$ill_time)
   dat_tt_ill$Z2_tt=dat_tt_ill$Z2*ttfun(dat_tt_ill$ill_time)
-  dat_tt_death=survSplit(Surv(death_time,death1)~.,dat,cut=dat$death_time)
-  dat_tt_death$Z2_tt=dat_tt_death$Z2*ttfun(dat_tt_death$death_time)
+  dat_tt_death=survSplit(Surv(ill_time,death1)~.,dat,cut=dat$ill_time)
+  dat_tt_death$Z2_tt=dat_tt_death$Z2*ttfun(dat_tt_death$ill_time)
   dat_tt_trans23=survSplit(Surv(death_time,death)~.,dat_trans23,cut=dat_trans23$death_time)
   dat_tt_trans23$Z2_tt=dat_tt_trans23$Z2*ttfun(dat_tt_trans23$death_time)
+  dat_tt_trans23$tstart=dat_tt_trans23$tstart+dat_tt_trans23$ill_time
+  dat_tt_trans23$death_time=dat_tt_trans23$tstart+dat_tt_trans23$death_time
   
-  cox12_A=coxph(Surv(tstart,ill_time,ill)~Z1,data=dat_tt_ill)
-  cox13_A=coxph(Surv(tstart,death_time,death1)~Z1,data=dat_tt_death)
-  cox23_A=coxph(Surv(tstart,death_time,death)~Z1,data=dat_tt_trans23)
+  cox12_A=coxph(Surv(tstart,ill_time,ill)~Z1,data=dat_tt_ill,timefix=F)
+  cox13_A=coxph(Surv(tstart,death_time,death1)~Z1,data=dat_tt_death,timefix=F)
+  cox23_A=coxph(Surv(tstart,death_time,death)~Z1,data=dat_tt_trans23,timefix=F)
   
-  cox12_B=coxph(Surv(ill_time,ill)~Z1+Z2+Z2_tt,data=dat_tt_ill)
-  cox13_B=coxph(Surv(ill_time,death1)~Z1+Z2+Z2_tt,data=dat_tt_death)
-  cox23_B=coxph(Surv(death_time,death)~Z1+Z2+Z2_tt,data=dat_tt_trans23)
+  cox12_B=coxph(Surv(tstart,ill_time,ill)~Z1+Z2+Z2_tt,data=dat_tt_ill,timefix=F)
+  cox13_B=coxph(Surv(tstart,ill_time,death1)~Z1+Z2+Z2_tt,data=dat_tt_death,timefix=F)
+  cox23_B=coxph(Surv(tstart,death_time,death)~Z1+Z2+Z2_tt,data=dat_tt_trans23,timefix=F)
   
-  cox12_marginal=coxph(Surv(ill_time,ill)~1,data=dat)
-  cox13_marginal=coxph(Surv(ill_time,death1)~1,data=dat)
-  cox23_marginal=coxph(Surv(death_time,death)~1,data=dat_trans23)
+  cox12_marginal=coxph(Surv(tstart,ill_time,ill)~1,data=dat_tt_ill,timefix=F)
+  cox13_marginal=coxph(Surv(tstart,ill_time,death1)~1,data=dat_tt_death,timefix=F)
+  cox23_marginal=coxph(Surv(tstart,death_time,death)~1,data=dat_tt_trans23,timefix=F)
   
   c_indices_A[i,]=c(concordance(cox13_A)$concordance,concordance(cox12_A)$concordance,concordance(cox23_A)$concordance)
   c_indices_B[i,]=c(concordance(cox13_B)$concordance,concordance(cox12_B)$concordance,concordance(cox23_B)$concordance)
